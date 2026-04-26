@@ -2345,7 +2345,7 @@ export default function App() {
           </span>
           <div>
             <div className="brand-title">MTProxy Control</div>
-            <p className="sidebar-caption">v{releaseVersion}</p>
+            <p className="sidebar-caption">{releaseVersion}</p>
           </div>
         </button>
 
