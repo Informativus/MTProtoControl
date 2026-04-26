@@ -466,12 +466,12 @@ export default function App() {
   const [currentPath, setCurrentPath] = useState(readCurrentPath);
   const [workspaceMode, setWorkspaceMode] = useState('guided');
   const [activeSectionId, setActiveSectionId] = useState('inventory-section');
+  const [inventoryFocusRequest, setInventoryFocusRequest] = useState(0);
   const hasLoadedApiState = useRef(false);
   const hasLoadedServers = useRef(false);
   const inventorySectionRef = useRef(null);
   const inventoryPrimaryInputRef = useRef(null);
   const logsOutputRef = useRef(null);
-  const pendingInventoryFocusRef = useRef(false);
   const workspaceRef = useRef(null);
 
   useEffect(() => {
@@ -1299,21 +1299,20 @@ export default function App() {
   }
 
   useEffect(() => {
-    if (!pendingInventoryFocusRef.current || !isBoardView || !inventoryFormVisible) {
+    if (inventoryFocusRequest === 0 || !isBoardView || !inventoryFormVisible) {
       return undefined;
     }
 
-    pendingInventoryFocusRef.current = false;
-    inventorySectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
     const frame = window.requestAnimationFrame(() => {
+      const target = inventoryPrimaryInputRef.current || inventorySectionRef.current;
+      target?.scrollIntoView({ behavior: 'smooth', block: inventoryPrimaryInputRef.current ? 'center' : 'start' });
       inventoryPrimaryInputRef.current?.focus();
     });
 
     return () => {
       window.cancelAnimationFrame(frame);
     };
-  }, [inventoryFormVisible, isBoardView]);
+  }, [inventoryFocusRequest, inventoryFormVisible, isBoardView]);
 
   useEffect(() => {
     if (showAllSections) {
@@ -1455,9 +1454,10 @@ export default function App() {
   }
 
   function handleStartCreateServer() {
-    pendingInventoryFocusRef.current = true;
+    setInventoryFocusRequest((current) => current + 1);
     navigateToBoard();
-    openSection('inventory-section');
+    setWorkspaceMode('guided');
+    setActiveSectionId('inventory-section');
     setInventoryMode('create');
     setInventoryDraft(createServerDraft());
     setInventoryFieldErrors({});
@@ -1471,9 +1471,10 @@ export default function App() {
       return;
     }
 
-    pendingInventoryFocusRef.current = true;
+    setInventoryFocusRequest((current) => current + 1);
     navigateToBoard();
-    openSection('inventory-section');
+    setWorkspaceMode('guided');
+    setActiveSectionId('inventory-section');
     setInventoryMode('edit');
     setInventoryDraft(createServerDraft(selectedServer));
     setInventoryFieldErrors({});
