@@ -1,10 +1,30 @@
-# MTProxy Control
+<p align="center">
+  <img src="./apps/web/public/brand-mark.svg" width="140" alt="MTProxy Control logo" />
+</p>
 
-This project is a local-first MTProto proxy management panel.
+<h1 align="center">MTProxy Control</h1>
 
-The panel should start as a local development tool and later move to a control server.
+<p align="center">
+  Панель для управления Telegram MTProto proxy-серверами: SSH-диагностика, настройка Telemt, деплой, логи и мониторинг.
+</p>
 
-## Local Startup
+<p align="center">
+  <img src="./docs/readme-preview.svg" width="100%" alt="Интерфейс MTProxy Control" />
+</p>
+
+## Что это
+
+MTProxy Control - это локальная панель управления MTProto proxy-серверами. Проект состоит из Go API, React/Vite web UI и SQLite, а с серверами работает по SSH без отдельного агента.
+
+## Быстрый локальный запуск
+
+Нужно установить:
+
+- `Go 1.22+`
+- `Node.js` и `npm`
+- `sqlite3`
+
+Команды:
 
 ```bash
 make setup
@@ -12,32 +32,13 @@ make db:migrate
 make dev
 ```
 
-- API: `http://localhost:8080/health`
-- Web: `http://localhost:5173`
-- Local database: `./data/panel.db`
+После запуска:
 
-## Goal
+- Web UI: `http://localhost:5173`
+- API health: `http://localhost:8080/health`
+- База данных: `./data/panel.db`
 
-Build a UI that can:
-
-- Add a server by SSH credentials.
-- Check prerequisites such as Docker, Compose, DNS, port `443`, and existing containers.
-- Generate a default Telemt config with field explanations.
-- Let the operator edit config before applying it.
-- Deploy Telemt over SSH.
-- Restart MTProto service.
-- Show Docker logs.
-- Run health checks.
-- Send Telegram alerts when a server or MTProto endpoint goes down.
-
-<<<<<<< Updated upstream
-## Recommended Stack
-=======
-Это самый прямой путь для локальной разработки, потому что в репозитории уже есть готовый `Makefile` для API и web UI. Если нужен более изолированный запуск, ниже есть вариант через Docker Compose.
-
-## Docker Compose
-
-Для более простого запуска без ручного старта двух процессов теперь есть контейнерная сборка:
+## Запуск через Docker Compose
 
 ```bash
 docker compose build
@@ -47,92 +48,52 @@ docker compose up -d
 После запуска:
 
 - Web UI: `http://localhost:8081`
-- API: `http://localhost:8080/health`
+- API health: `http://localhost:8080/health`
 
-Что важно для SSH внутри контейнера:
+Остановка:
 
-- `docker-compose.yml` по умолчанию монтирует `${HOME}/.ssh` в `/root/.ssh` только для чтения.
-- Если будешь использовать `private_key_path` в панели, внутри контейнера путь должен быть вида `/root/.ssh/id_ed25519`.
-- Если не хочешь монтировать ключи с хоста, можно использовать вставку приватного ключа через интерфейс.
->>>>>>> Stashed changes
+```bash
+docker compose down
+```
 
-- Go backend.
-- React frontend.
-- SQLite database.
-- SSH command execution from backend.
-- Telemt on managed servers.
+Важно:
 
-## Milestones
+- `docker-compose.yml` монтирует `${HOME}/.ssh` в `/root/.ssh` только для чтения.
+- Если в панели использовать `private_key_path`, внутри контейнера указывай путь вроде `/root/.ssh/id_ed25519`.
 
-### Milestone 1: Local Skeleton And Diagnostics
+## Доступ через SSH туннель
 
-Deliver:
+Если панель поднята на удалённом сервере и ты не хочешь открывать сайт наружу, можно зайти через SSH-туннель.
 
-- `make dev`
-- Go API skeleton
-- React UI skeleton
-- SQLite migrations
-- Add server form
-- SSH connection test
-- Docker/DNS/port diagnostics
+На своём компьютере запусти:
 
-### Milestone 2: Telemt Config And Deploy
+```bash
+ssh -N -L 8081:127.0.0.1:8081 -L 8080:127.0.0.1:8080 user@your-server
+```
 
-Deliver:
+После этого открывай локально:
 
-- Telemt config generator
-- Config editor with explanations
-- Deploy preview
-- Remote deploy executor
-- Restart action
-- Link retrieval from Telemt API
+- Web UI: `http://127.0.0.1:8081`
+- API health: `http://127.0.0.1:8080/health`
 
-### Milestone 3: Operations UI
+Если локальные порты заняты, можно взять другие:
 
-Deliver:
+```bash
+ssh -N -L 18081:127.0.0.1:8081 -L 18080:127.0.0.1:8080 user@your-server
+```
 
-- Logs viewer
-- Status view
-- Event history
-- Server detail page
-- Safe remote command output handling
+Тогда адреса будут такие:
 
-### Milestone 4: Health And Alerts
+- Web UI: `http://127.0.0.1:18081`
+- API health: `http://127.0.0.1:18080/health`
 
-Deliver:
+## Полезные команды
 
-- Background health worker
-- State transitions
-- Telegram alerts
-- Recovery alerts
-- Anti-spam logic
-
-### Milestone 5: Control Server Readiness
-
-Deliver:
-
-- UI auth
-- Encrypted credential storage
-- Docker Compose for panel itself
-- Backup/export process
-
-## Implementation Flow
-
-Build the project milestone by milestone. Keep each change small enough to run and verify locally before moving on.
-
-## Local Task Files
-
-Detailed task files live in `tasks/`. They are intentionally ignored by git as local agent handoff notes, but should be kept in the working tree while building the project.
-
-Execute tasks in order:
-
-1. `tasks/00-scaffold.md`
-2. `tasks/01-backend-foundation.md`
-3. `tasks/02-ssh-layer.md`
-4. `tasks/03-server-diagnostics.md`
-5. `tasks/04-telemt-config.md`
-6. `tasks/05-deploy-flow.md`
-7. `tasks/06-server-operations.md`
-8. `tasks/07-health-checks.md`
-9. `tasks/08-telegram-alerts.md`
-10. `tasks/09-hardening-and-server-deploy.md`
+```bash
+make dev:api
+make dev:web
+make api:test
+make web:test
+make fmt
+make lint
+```
