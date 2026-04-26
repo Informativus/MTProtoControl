@@ -77,17 +77,17 @@ docker compose down
 - `docker-compose.yml` монтирует `${HOME}/.ssh` в `/root/.ssh` только для чтения.
 - Если в панели используется `private_key_path`, внутри контейнера указывайте путь вида `/root/.ssh/id_ed25519`.
 
-## Установка из опубликованных образов
+## Установка на сервер
 
-Готовый `docker-compose.yml` и шаблон `.env` публикуются вместе с релизом.
+Для быстрого старта без ручного выбора тега скачайте `docker-compose.yml` и шаблон `.env` напрямую из `main`.
 
 ### Шаг 1. Скачать файлы
 
 ```bash
 mkdir -p /opt/mtproxy-control
 cd /opt/mtproxy-control
-curl -fsSL "https://github.com/Informativus/MTProtoControl/releases/latest/download/docker-compose.release.yml" -o docker-compose.yml
-curl -fsSL "https://github.com/Informativus/MTProtoControl/releases/latest/download/release.env.example" -o .env
+curl -fsSL "https://raw.githubusercontent.com/Informativus/MTProtoControl/main/deploy/docker-compose.release.yml" -o docker-compose.yml
+curl -fsSL "https://raw.githubusercontent.com/Informativus/MTProtoControl/main/deploy/release.env.example" -o .env
 mkdir -p ssh
 ```
 
@@ -108,7 +108,7 @@ docker compose --env-file .env up -d
 docker compose --env-file .env down
 ```
 
-Если нужен не последний стабильный релиз, а конкретная версия или beta, замените `latest/download` в URL на `download/<tag>`.
+Если нужен зафиксированный релиз, скачайте файлы не из `main`, а из `https://github.com/Informativus/MTProtoControl/releases/download/<tag>/...`.
 
 ## Как это работает
 
@@ -120,7 +120,7 @@ docker compose --env-file .env down
 
 ## Что менять в `.env`
 
-- `API_IMAGE` и `WEB_IMAGE`: имя и тег образов в Docker Hub; обычно менять не нужно, но можно вручную закрепить другой тег образа
+- `API_IMAGE` и `WEB_IMAGE`: имя и тег образов в Docker Hub; по умолчанию шаблон использует канал `beta`, но можно вручную закрепить конкретный тег образа
 - `WEB_PORT`: внешний порт web UI на сервере, по умолчанию `8081`
 - `HEALTHCHECK_INTERVAL`: как часто панель делает автоматические health checks
 - `APP_ENV`: оставляйте `production` для серверной установки
