@@ -77,37 +77,6 @@ docker compose down
 - `docker-compose.yml` монтирует `${HOME}/.ssh` в `/root/.ssh` только для чтения.
 - Если в панели используется `private_key_path`, внутри контейнера указывайте путь вида `/root/.ssh/id_ed25519`.
 
-## Beta release в GitHub
-
-В репозиторий добавлен workflow `.github/workflows/release.yml`.
-
-При пуше тега вида `v0.1.0-beta.1` он:
-
-- запускает `go test ./apps/api/...`
-- запускает `npm test` и `npm run build` для `apps/web`
-- собирает и публикует Docker-образы `mtproxy-control-api` и `mtproxy-control-web` в Docker Hub
-- создаёт GitHub Release и помечает его как pre-release, если тег содержит `beta`
-- прикладывает к релизу `deploy/docker-compose.release.yml` и `deploy/release.env.example`
-
-Перед первым beta release настройте в GitHub репозитория:
-
-- `Settings -> Secrets and variables -> Actions -> New repository secret`
-- секрет `DOCKERHUB_USERNAME`
-- секрет `DOCKERHUB_TOKEN`
-- опционально repository variable `DOCKERHUB_NAMESPACE`, если образы нужно публиковать не в личный namespace, а в организацию
-
-Команды для первого beta release:
-
-```bash
-make api:test
-make web:test
-git tag -a v0.1.0-beta.1 -m "Beta release v0.1.0-beta.1"
-git push origin main
-git push origin v0.1.0-beta.1
-```
-
-После этого GitHub Actions сам создаст pre-release и отправит образы в Docker Hub.
-
 ## Установка с Docker Hub
 
 Готовый compose для установки из опубликованных образов лежит в `deploy/docker-compose.release.yml`, а шаблон окружения - в `deploy/release.env.example`.
