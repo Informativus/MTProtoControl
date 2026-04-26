@@ -77,21 +77,25 @@ docker compose down
 - `docker-compose.yml` монтирует `${HOME}/.ssh` в `/root/.ssh` только для чтения.
 - Если в панели используется `private_key_path`, внутри контейнера указывайте путь вида `/root/.ssh/id_ed25519`.
 
-## Установка с Docker Hub
+## Установка из опубликованных образов
 
-Готовый compose для установки из опубликованных образов лежит в `deploy/docker-compose.release.yml`, а шаблон окружения - в `deploy/release.env.example`.
+Готовый `docker-compose.yml` и шаблон `.env` публикуются вместе с релизом.
 
-Команды установки на сервере:
+### Шаг 1. Скачать файлы
 
 ```bash
 mkdir -p /opt/mtproxy-control
 cd /opt/mtproxy-control
-export RELEASE_TAG=v0.1.0-beta.1
-curl -fsSL "https://raw.githubusercontent.com/Informativus/MTProtoControl/${RELEASE_TAG}/deploy/docker-compose.release.yml" -o docker-compose.yml
-curl -fsSL "https://raw.githubusercontent.com/Informativus/MTProtoControl/${RELEASE_TAG}/deploy/release.env.example" -o .env
+curl -fsSL "https://github.com/Informativus/MTProtoControl/releases/latest/download/docker-compose.release.yml" -o docker-compose.yml
+curl -fsSL "https://github.com/Informativus/MTProtoControl/releases/latest/download/release.env.example" -o .env
+mkdir -p ssh
 ```
 
-Потом откройте `.env`, замените значения под свой сервер и запустите:
+### Шаг 2. Настроить `.env`
+
+Откройте `.env` и замените значения под свой сервер.
+
+### Шаг 3. Запустить контейнеры
 
 ```bash
 docker compose --env-file .env pull
@@ -104,6 +108,8 @@ docker compose --env-file .env up -d
 docker compose --env-file .env down
 ```
 
+Если нужен не последний стабильный релиз, а конкретная версия или beta, замените `latest/download` в URL на `download/<tag>`.
+
 ## Как это работает
 
 - контейнер `api` запускает миграции SQLite и поднимает Go API на `:8080`
@@ -114,7 +120,7 @@ docker compose --env-file .env down
 
 ## Что менять в `.env`
 
-- `API_IMAGE` и `WEB_IMAGE`: имя и тег образов в Docker Hub; обычно меняется только тег при обновлении релиза
+- `API_IMAGE` и `WEB_IMAGE`: имя и тег образов в Docker Hub; обычно менять не нужно, но можно вручную закрепить другой тег образа
 - `WEB_PORT`: внешний порт web UI на сервере, по умолчанию `8081`
 - `HEALTHCHECK_INTERVAL`: как часто панель делает автоматические health checks
 - `APP_ENV`: оставляйте `production` для серверной установки
