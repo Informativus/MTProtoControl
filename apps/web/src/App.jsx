@@ -2779,13 +2779,8 @@ export default function App() {
           ) : (
             <div className="operations-grid ssh-grid">
               <article className="operations-column">
-                <div className="deploy-section-header">
-                  <strong>SSH-авторизация</strong>
-                  <span>Используется для SSH-проверки, превью, деплоя и перезапуска. Live-логи и live-статус работают через private_key_path.</span>
-                </div>
-
                 <label className="field-card">
-                  <span className="field-label">Тип авторизации</span>
+                  <span className="field-label">Способ входа</span>
                   <select className="text-input" onChange={(event) => updateDeployField('auth_type', event.target.value)} value={deployDraft.auth_type}>
                     <option value="password">Пароль пользователя</option>
                     <option value="private_key_path">Путь к приватному ключу</option>
@@ -2903,7 +2898,7 @@ export default function App() {
                       ))}
                     </div>
                   ) : (
-                    <p className="panel-note">Запустите SSH-проверку, чтобы получить имя хоста, проверки Docker и raw-вывод команд до превью деплоя.</p>
+                    <p className="panel-note">Запустите SSH-проверку, чтобы получить имя хоста, архитектуру, результаты команд и проверить Docker до превью деплоя.</p>
                   )}
                 </div>
               </article>
@@ -3325,7 +3320,7 @@ export default function App() {
                 <article className="deploy-column">
                   <div className="deploy-section-header">
                     <strong>Управление деплоем</strong>
-                    <span>SSH-авторизация настраивается в блоке выше</span>
+                    <span>SSH-доступ настраивается в блоке выше</span>
                   </div>
 
                   <div className="link-card compact-link-card">
