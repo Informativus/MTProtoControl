@@ -38,7 +38,7 @@ MTProxy Control - локальная панель для операторов Te
 
 ## Установка на сервер
 
-Для быстрого старта без ручного выбора версии скачайте `docker-compose.yml` и шаблон `.env` напрямую из `main`.
+Скачайте `docker-compose.yml` и шаблон `.env`.
 
 ### Шаг 1. Скачать файлы
 
@@ -54,8 +54,6 @@ mkdir -p ssh
 
 Откройте `.env` и замените значения под свой сервер.
 
-По умолчанию шаблон использует `IMAGE_TAG=beta`. Это канал обновлений: после выхода нового beta-релиза сервер подтянет новые образы без правки `docker-compose.yml`.
-
 ### Шаг 3. Запустить контейнеры
 
 ```bash
@@ -68,15 +66,6 @@ docker compose --env-file .env up -d --pull always
 docker compose --env-file .env down
 ```
 
-Если нужен зафиксированный релиз, скачайте файлы не из `main`, а из `https://github.com/Informativus/MTProtoControl/releases/download/<tag>/...`.
-У release asset `release.env.example` `IMAGE_TAG` уже будет равен версии релиза, например `0.1.0-beta.1`.
-
-### Обновление
-
-- Если в `.env` стоит `IMAGE_TAG=beta`, достаточно выполнить `docker compose --env-file .env up -d --pull always`.
-- Если в `.env` стоит конкретная версия, например `IMAGE_TAG=0.1.0-beta.1`, обновление делается сменой тега на новый и той же командой `docker compose --env-file .env up -d --pull always`.
-- Для stable-релизов workflow публикует тег `latest`, для beta-релизов - тег `beta`.
-
 ## Как это работает
 
 - контейнер `api` запускает миграции SQLite и поднимает Go API на `:8080`
@@ -88,7 +77,7 @@ docker compose --env-file .env down
 ## Что менять в `.env`
 
 - `IMAGE_REGISTRY`: Docker Hub namespace, по умолчанию `docker.io/informativus`
-- `IMAGE_TAG`: канал или версия образов. Примеры: `beta`, `latest`, `0.1.0-beta.1`, `0.1.0`
+- `IMAGE_TAG`: тег образов, обычно менять не нужно
 - `WEB_PORT`: внешний порт web UI на сервере, по умолчанию `8081`
 - `HEALTHCHECK_INTERVAL`: как часто панель делает автоматические health checks
 - `APP_ENV`: оставляйте `production` для серверной установки
