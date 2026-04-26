@@ -581,7 +581,6 @@ export default function App() {
       cancelled = true;
     };
   }, []);
-
   useEffect(() => {
     let cancelled = false;
 
@@ -609,7 +608,6 @@ export default function App() {
       cancelled = true;
     };
   }, []);
-
   useEffect(() => {
     let cancelled = false;
 
@@ -796,7 +794,7 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [selectedServerId]);
+  }, [selectedServerId]); // eslint-disable-line react-hooks/exhaustive-deps -- switching servers resets workspace state in one place
 
   useEffect(() => {
     if (!selectedServerId) {
@@ -836,7 +834,7 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [selectedServerId]);
+  }, [selectedServerId]); // eslint-disable-line react-hooks/exhaustive-deps -- initial status load follows selection; later auth edits use manual refresh
 
   useEffect(() => {
     if (!selectedServerId) {
@@ -999,7 +997,7 @@ export default function App() {
     setInventoryDraft(createServerDraft(currentSelectedServer));
     setInventoryFieldErrors({});
     setInventoryError('');
-  }, [inventoryMode, selectedServerId]);
+  }, [inventoryMode, selectedServerId]); // eslint-disable-line react-hooks/exhaustive-deps -- avoid clobbering edit inputs on background list refresh
 
   const selectedServer = servers.find((server) => server.id === selectedServerId) || null;
   const maxSidebarServerOffset = Math.max(0, servers.length - sidebarVisibleServerLimit);
@@ -1106,7 +1104,6 @@ export default function App() {
     inventoryDraft.host.trim() !== '' &&
     inventoryDraft.ssh_user.trim() !== '' &&
     inventoryDraft.private_key_path.trim() !== '';
-  const inventoryBasicsFilled = ['name', 'host', 'ssh_user', 'private_key_path'].filter((key) => inventoryDraft[key].trim() !== '').length;
   const inventoryRouteReady =
     inventoryDraft.public_host.trim() !== '' && inventoryDraft.mtproto_port.trim() !== '' && inventoryDraft.sni_domain.trim() !== '';
   const inventoryImportBadge = inventoryDetectBusy

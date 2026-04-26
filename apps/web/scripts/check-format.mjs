@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const root = process.cwd();
-const checkedExtensions = new Set(['.css', '.html', '.js', '.jsx', '.json']);
+const checkedExtensions = new Set(['.css', '.html', '.js', '.jsx', '.json', '.mjs', '.ts', '.tsx']);
 const ignoredDirs = new Set(['dist', 'node_modules']);
 const failures = [];
 

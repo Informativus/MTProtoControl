@@ -168,6 +168,8 @@ function splitLogLines(value) {
 function sanitizeLogsOutput(value) {
   return toText(value)
     .replace(/\r\n?/gu, '\n')
+    // Strip ANSI escape sequences from remote logs before paging them in the UI.
+    // eslint-disable-next-line no-control-regex
     .replace(/\u001b(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/gu, '');
 }
 
