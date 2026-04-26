@@ -13,7 +13,7 @@ export const serverInventoryFields = [
     label: 'Хост',
     type: 'text',
     placeholder: '203.0.113.10',
-    description: 'SSH-адрес, к которому будет подключаться панель.',
+    description: 'SSH-адрес, к которому будет подключаться панель. Если панель и Telemt стоят на одном сервере, можно указать localhost или 127.0.0.1.',
   },
   {
     key: 'ssh_port',
@@ -34,7 +34,7 @@ export const serverInventoryFields = [
     label: 'Путь к SSH-ключу',
     type: 'text',
     placeholder: '~/.ssh/proxy-node',
-    description: 'Локальный путь к приватному ключу на машине API. Нужен для автоподключения и автоопределения значений с сервера.',
+    description: 'Локальный путь к приватному ключу на машине API. Для docker-установки ключ и known_hosts обычно лежат в ./ssh и внутри API доступны как /root/.ssh/*.',
   },
   {
     key: 'public_host',

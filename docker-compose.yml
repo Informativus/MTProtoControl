@@ -7,6 +7,9 @@ services:
       API_ADDR: :8080
       DATABASE_PATH: /data/panel.db
       HEALTHCHECK_INTERVAL: ${HEALTHCHECK_INTERVAL:-30s}
+      PANEL_SELF_HOST_SSH_ALIAS: ${PANEL_SELF_HOST_SSH_ALIAS:-host.docker.internal}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "${API_PORT:-8080}:8080"
     restart: unless-stopped

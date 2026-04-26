@@ -201,7 +201,7 @@ func TestDialClientTimesOutDuringHandshake(t *testing.T) {
 	defer cancel()
 
 	startedAt := time.Now()
-	_, err = dialClient(ctx, listener.Addr().String(), &ssh.ClientConfig{
+	_, err = dialClient(ctx, listener.Addr().String(), listener.Addr().String(), &ssh.ClientConfig{
 		User:            "operator",
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	})
@@ -278,5 +278,33 @@ func TestConnectionPoolKeyHashesPasswordAuth(t *testing.T) {
 	}
 	if other := connectionPoolKey(TestRequest{Host: "203.0.113.10", SSHPort: 22, SSHUser: "operator"}, passwordFingerprint("hunter3")); key == other {
 		t.Fatalf("expected different passwords to produce different pool keys, got %q", key)
+	}
+}
+
+func TestResolveSSHAddressesUsesSelfHostAliasForLoopback(t *testing.T) {
+	dialAddress, hostKeyAddress := resolveSSHAddresses("127.0.0.1", 22, "host.docker.internal")
+	if dialAddress != "host.docker.internal:22" {
+		t.Fatalf("expected host alias dial address, got %q", dialAddress)
+	}
+	if hostKeyAddress != "127.0.0.1:22" {
+		t.Fatalf("expected original host key address, got %q", hostKeyAddress)
+	}
+
+	dialAddress, hostKeyAddress = resolveSSHAddresses("localhost", 2222, "host.docker.internal")
+	if dialAddress != "host.docker.internal:2222" {
+		t.Fatalf("expected localhost to route via alias, got %q", dialAddress)
+	}
+	if hostKeyAddress != "localhost:2222" {
+		t.Fatalf("expected localhost host key address, got %q", hostKeyAddress)
+	}
+}
+
+func TestResolveSSHAddressesLeavesRemoteHostsUntouched(t *testing.T) {
+	dialAddress, hostKeyAddress := resolveSSHAddresses("203.0.113.10", 22, "host.docker.internal")
+	if dialAddress != "203.0.113.10:22" {
+		t.Fatalf("expected remote dial address, got %q", dialAddress)
+	}
+	if hostKeyAddress != "203.0.113.10:22" {
+		t.Fatalf("expected remote host key address, got %q", hostKeyAddress)
 	}
 }

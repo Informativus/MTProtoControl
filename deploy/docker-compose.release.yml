@@ -6,6 +6,9 @@ services:
       API_ADDR: ${API_ADDR:-:8080}
       DATABASE_PATH: ${DATABASE_PATH:-/data/panel.db}
       HEALTHCHECK_INTERVAL: ${HEALTHCHECK_INTERVAL:-30s}
+      PANEL_SELF_HOST_SSH_ALIAS: ${PANEL_SELF_HOST_SSH_ALIAS:-host.docker.internal}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
     volumes:
       - mtproxy-control-data:/data

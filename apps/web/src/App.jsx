@@ -113,6 +113,29 @@ const inventoryFieldGroups = [
   },
 ];
 
+const inventoryQuickHints = [
+  {
+    label: 'Если это тот же сервер',
+    value: 'host = localhost',
+    description: 'Когда панель и Telemt стоят на одном сервере, в host можно указывать localhost или 127.0.0.1.',
+  },
+  {
+    label: 'Путь к SSH-ключу',
+    value: 'Docker: /root/.ssh/id_ed25519',
+    description: 'Если панель запущена без Docker, укажите обычный путь на машине API, например /home/operator/.ssh/id_ed25519.',
+  },
+  {
+    label: 'Папка Telemt',
+    value: '/opt/mtproto-panel/telemt',
+    description: 'Оставляйте для нового deploy. Если Telemt уже установлен вручную, укажите его текущую папку и потом нажмите «Импортировать MTProto».',
+  },
+  {
+    label: 'Публичный маршрут',
+    value: 'mt.example.com : 443',
+    description: 'Обычно public_host и sni_domain совпадают, public_ip - это внешний IP сервера, а mtproto_port чаще всего равен 443.',
+  },
+];
+
 function normalizeHealthState(status) {
   switch ((status || '').toLowerCase()) {
     case 'healthy':
@@ -1108,7 +1131,7 @@ export default function App() {
     ? inventoryRouteReady
       ? 'Используйте это только для уже установленного прокси: импорт обновит найденные значения поверх текущего маршрута.'
       : 'Используйте это только для уже установленного прокси: импорт заполнит маршрут MTProto автоматически.'
-    : 'Используйте это только если прокси уже существует на сервере и вы хотите импортировать его настройки. Для импорта заполните host, ssh_user и private_key_path.';
+    : 'Используйте это только если прокси уже существует на сервере и вы хотите импортировать его настройки. Для импорта заполните host, ssh_user и private_key_path. Если панель стоит на том же сервере, в host можно указать localhost.';
 
   const tlsDomainWarning = getTLSDomainWarning(draftFields);
   const draftPreviewLink = buildPreviewLink(draftFields);
@@ -2609,6 +2632,17 @@ export default function App() {
 
               {inventoryFormVisible ? (
                 <>
+                  <div className="inventory-form-overview summary-grid" aria-label="Быстрые подсказки по заполнению сервера">
+                    {inventoryQuickHints.map((hint) => (
+                      <article className="preview-card" key={hint.label}>
+                        <span className="preview-label">Быстрая подсказка</span>
+                        <strong>{hint.label}</strong>
+                        <code>{hint.value}</code>
+                        <span>{hint.description}</span>
+                      </article>
+                    ))}
+                  </div>
+
                   <article className="inventory-import-card">
                     <div className="inventory-import-header">
                       <div>
@@ -2670,6 +2704,7 @@ export default function App() {
                         <div className="inventory-field-group-header">
                           <div>
                             <strong>{group.title}</strong>
+                            {group.description ? <p>{group.description}</p> : null}
                           </div>
                         </div>
 
@@ -2690,6 +2725,7 @@ export default function App() {
                                   type={field.type}
                                   value={inventoryDraft[field.key]}
                                 />
+                                {field.description ? <span className="field-hint">{field.description}</span> : null}
                                 {fieldError ? <span className="field-error">{fieldError}</span> : null}
                               </label>
                             );

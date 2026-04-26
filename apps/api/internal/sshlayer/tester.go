@@ -23,6 +23,7 @@ const (
 	AuthTypePrivateKeyText = "private_key_text"
 	AuthTypePrivateKeyPath = "private_key_path"
 	AuthTypePassword       = "password"
+	selfHostAliasEnv       = "PANEL_SELF_HOST_SSH_ALIAS"
 
 	defaultSSHPort        = 22
 	defaultConnectTimeout = 10 * time.Second
@@ -48,6 +49,7 @@ type Tester interface {
 type Service struct {
 	connectTimeout time.Duration
 	commandTimeout time.Duration
+	selfHostAlias  string
 
 	poolMu     sync.Mutex
 	clients    map[string]*pooledClient
@@ -162,6 +164,7 @@ func NewTester() *Service {
 	return &Service{
 		connectTimeout: defaultConnectTimeout,
 		commandTimeout: defaultCommandTimeout,
+		selfHostAlias:  strings.TrimSpace(os.Getenv(selfHostAliasEnv)),
 		clients:        map[string]*pooledClient{},
 		connecting:     map[string]chan struct{}{},
 	}
@@ -445,9 +448,9 @@ func newHostKeyCallback() (ssh.HostKeyCallback, error) {
 	return callback, nil
 }
 
-func dialClient(ctx context.Context, address string, config *ssh.ClientConfig) (*ssh.Client, error) {
+func dialClient(ctx context.Context, dialAddress, hostKeyAddress string, config *ssh.ClientConfig) (*ssh.Client, error) {
 	var dialer net.Dialer
-	connection, err := dialer.DialContext(ctx, "tcp", address)
+	connection, err := dialer.DialContext(ctx, "tcp", dialAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -457,7 +460,7 @@ func dialClient(ctx context.Context, address string, config *ssh.ClientConfig) (
 		return nil, err
 	}
 
-	clientConn, channels, requests, err := ssh.NewClientConn(connection, address, config)
+	clientConn, channels, requests, err := ssh.NewClientConn(connection, hostKeyAddress, config)
 	if err != nil {
 		connection.Close()
 		return nil, err
@@ -472,7 +475,7 @@ func dialClient(ctx context.Context, address string, config *ssh.ClientConfig) (
 }
 
 func (s *Service) borrowClient(ctx context.Context, input TestRequest, authFingerprint string, config *ssh.ClientConfig) (*clientLease, error) {
-	address := net.JoinHostPort(input.Host, strconv.Itoa(input.SSHPort))
+	dialAddress, hostKeyAddress := resolveSSHAddresses(input.Host, input.SSHPort, s.selfHostAlias)
 	key := connectionPoolKey(input, authFingerprint)
 
 	for {
@@ -493,7 +496,7 @@ func (s *Service) borrowClient(ctx context.Context, input TestRequest, authFinge
 			}
 		}
 
-		client, err := dialClientWithRetry(ctx, address, config)
+		client, err := dialClientWithRetry(ctx, dialAddress, hostKeyAddress, config)
 		if err != nil {
 			s.finishConnect(key, nil)
 			return nil, err
@@ -642,12 +645,12 @@ func (s *Service) closeIdleClient(key string, client *ssh.Client) {
 	}
 }
 
-func dialClientWithRetry(ctx context.Context, address string, config *ssh.ClientConfig) (*ssh.Client, error) {
+func dialClientWithRetry(ctx context.Context, dialAddress, hostKeyAddress string, config *ssh.ClientConfig) (*ssh.Client, error) {
 	var lastErr error
 	backoff := connectRetryDelay
 
 	for attempt := 1; attempt <= maxConnectAttempts; attempt++ {
-		client, err := dialClient(ctx, address, config)
+		client, err := dialClient(ctx, dialAddress, hostKeyAddress, config)
 		if err == nil {
 			return client, nil
 		}
@@ -668,6 +671,24 @@ func dialClientWithRetry(ctx context.Context, address string, config *ssh.Client
 	}
 
 	return nil, lastErr
+}
+
+func resolveSSHAddresses(host string, sshPort int, selfHostAlias string) (string, string) {
+	hostKeyAddress := net.JoinHostPort(host, strconv.Itoa(sshPort))
+	dialHost := host
+	if selfHostAlias = strings.TrimSpace(selfHostAlias); selfHostAlias != "" && isLoopbackSSHHost(host) {
+		dialHost = selfHostAlias
+	}
+	return net.JoinHostPort(dialHost, strconv.Itoa(sshPort)), hostKeyAddress
+}
+
+func isLoopbackSSHHost(host string) bool {
+	host = strings.TrimSpace(host)
+	if strings.EqualFold(host, "localhost") {
+		return true
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
 }
 
 func shouldRetryConnectError(err error) bool {
