@@ -1255,9 +1255,16 @@ h2 {
 }
 
 .title-with-hint {
+  position: relative;
   display: inline-flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
+}
+
+.inline-hint-trigger {
+  display: inline-flex;
+  align-items: center;
 }
 
 .inline-hint {
@@ -1276,9 +1283,43 @@ h2 {
   cursor: help;
 }
 
-.inline-hint:focus-visible {
+.inline-hint-trigger:focus-visible {
   outline: 2px solid rgba(96, 165, 250, 0.5);
   outline-offset: 2px;
+}
+
+.inline-hint-tooltip {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  z-index: 20;
+  max-width: min(360px, calc(100vw - 56px));
+  padding: 10px 12px;
+  border: 1px solid rgba(96, 165, 250, 0.22);
+  border-radius: 12px;
+  background: rgba(8, 15, 26, 0.98);
+  box-shadow: 0 20px 48px rgba(2, 6, 23, 0.45);
+  color: #dbeafe;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition:
+    opacity 140ms ease,
+    visibility 140ms ease,
+    transform 140ms ease;
+  white-space: normal;
+  pointer-events: none;
+  overflow-wrap: anywhere;
+}
+
+.title-with-hint:hover .inline-hint-tooltip,
+.title-with-hint:focus-within .inline-hint-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
 }
 
 .button-row,

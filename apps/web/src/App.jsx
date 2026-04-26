@@ -412,8 +412,13 @@ function MetaChip({ icon, children }) {
 
 function InlineHint({ text }) {
   return (
-    <span aria-label={text} className="inline-hint" role="note" tabIndex={0} title={text}>
-      ?
+    <span aria-label={text} className="inline-hint-trigger" tabIndex={0}>
+      <span aria-hidden="true" className="inline-hint">
+        ?
+      </span>
+      <span className="inline-hint-tooltip" role="tooltip">
+        {text}
+      </span>
     </span>
   );
 }
