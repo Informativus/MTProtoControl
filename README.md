@@ -9,7 +9,19 @@
 </p>
 
 <p align="center">
-  <img src="./docs/readme-preview.svg" width="100%" alt="Интерфейс MTProxy Control" />
+  Скриншоты ниже сняты из запущенной локально панели на безопасных demo-данных.
+</p>
+
+<p align="center">
+  <img src="./docs/screenshots/dashboard.png" width="100%" alt="Серверная доска MTProxy Control" />
+</p>
+
+<p align="center">
+  <img src="./docs/screenshots/workspace-overview.png" width="100%" alt="Рабочая зона сервера в MTProxy Control" />
+</p>
+
+<p align="center">
+  <img src="./docs/screenshots/workspace-config.png" width="100%" alt="Конфиг MTProto в MTProxy Control" />
 </p>
 
 ## Что это
