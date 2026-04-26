@@ -1696,6 +1696,12 @@ h2 {
   background: linear-gradient(135deg, rgba(17, 44, 92, 0.84), rgba(15, 23, 42, 0.92));
 }
 
+.inventory-import-guide {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
 .inventory-import-header {
   display: flex;
   align-items: flex-start;
@@ -1720,6 +1726,19 @@ h2 {
 
 .inventory-import-list {
   margin: 0;
+}
+
+.inventory-guide-code {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.52);
+  color: #e2e8f0;
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-x: auto;
+  white-space: pre-wrap;
 }
 
 .revision-header {

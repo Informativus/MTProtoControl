@@ -136,6 +136,20 @@ const inventoryQuickHints = [
   },
 ];
 
+const sameHostImportFieldExample = [
+  'host = localhost',
+  'ssh_user = <ваш SSH user>',
+  'private_key_path = /root/.ssh/<имя_ключа>',
+  'remote_base_path = /opt/mtproto-panel/telemt',
+].join('\n');
+
+const sameHostImportSetupExample = [
+  'mkdir -p ./ssh',
+  'cp ~/.ssh/<ваш_ключ> ./ssh/<ваш_ключ>',
+  'ssh-keyscan <server-ip> localhost 127.0.0.1 > ./ssh/known_hosts',
+  'chmod 600 ./ssh/<ваш_ключ> ./ssh/known_hosts',
+].join('\n');
+
 function normalizeHealthState(status) {
   switch ((status || '').toLowerCase()) {
     case 'healthy':
@@ -1131,7 +1145,7 @@ export default function App() {
     ? inventoryRouteReady
       ? 'Используйте это только для уже установленного прокси: импорт обновит найденные значения поверх текущего маршрута.'
       : 'Используйте это только для уже установленного прокси: импорт заполнит маршрут MTProto автоматически.'
-    : 'Используйте это только если прокси уже существует на сервере и вы хотите импортировать его настройки. Для импорта заполните host, ssh_user и private_key_path. Если панель стоит на том же сервере, в host можно указать localhost.';
+    : 'Используйте это только если прокси уже существует на сервере и вы хотите импортировать его настройки. Для импорта заполните host, ssh_user и private_key_path. Если панель и Telemt на одном сервере, воспользуйтесь подсказкой ниже.';
 
   const tlsDomainWarning = getTLSDomainWarning(draftFields);
   const draftPreviewLink = buildPreviewLink(draftFields);
@@ -2651,6 +2665,22 @@ export default function App() {
                         <p>{inventoryImportHint}</p>
                       </div>
                       <span className={`status-chip ${inventoryImportBadge.tone}`}>{inventoryImportBadge.label}</span>
+                    </div>
+
+                    <div className="inventory-import-guide" aria-label="Подсказка для импорта с того же сервера">
+                      <article className="preview-card">
+                        <span className="preview-label">Если это тот же сервер</span>
+                        <strong>Что ввести в поля</strong>
+                        <pre className="inventory-guide-code"><code>{sameHostImportFieldExample}</code></pre>
+                        <span>Если `localhost` не сработал, временно укажите внешний IP сервера вместо `localhost`, а потом повторите импорт.</span>
+                      </article>
+
+                      <article className="preview-card">
+                        <span className="preview-label">Подготовка на хосте</span>
+                        <strong>Что сделать один раз</strong>
+                        <pre className="inventory-guide-code"><code>{sameHostImportSetupExample}</code></pre>
+                        <span>Панель в docker-установке видит ключи только из папки `./ssh` рядом с release `docker-compose.yml`; внутри API это `/root/.ssh/*`.</span>
+                      </article>
                     </div>
 
                     <div className="button-row">

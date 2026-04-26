@@ -146,8 +146,25 @@ docker compose --env-file .env down
 - В поле `host` можно указать `localhost` или `127.0.0.1`.
 - В docker-установке API-контейнер сам переведет loopback SSH на хост сервера через `host.docker.internal`.
 - Для `private_key_path` используйте путь внутри контейнера, например `/root/.ssh/id_ed25519`.
-- Панель проверяет SSH host key, поэтому заранее положите запись в `./ssh/known_hosts`, например `ssh-keyscan -H localhost >> ./ssh/known_hosts`.
+- Для docker-установки сначала положите SSH-ключ в `./ssh` рядом с release `docker-compose.yml`, а потом укажите его в панели как `/root/.ssh/<имя_ключа>`.
+- Панель проверяет SSH host key, поэтому заранее положите запись в `./ssh/known_hosts`, например `ssh-keyscan <server-ip> localhost 127.0.0.1 > ./ssh/known_hosts`.
 - Если удобнее, вместо `localhost` можно по-прежнему указывать обычный IP или DNS-имя сервера.
+
+Короткий same-host рецепт:
+
+```bash
+mkdir -p ./ssh
+cp ~/.ssh/id_ed25519 ./ssh/id_ed25519
+ssh-keyscan <server-ip> localhost 127.0.0.1 > ./ssh/known_hosts
+chmod 600 ./ssh/id_ed25519 ./ssh/known_hosts
+```
+
+Потом в панели укажите:
+
+- `host = localhost`
+- `ssh_user = <ваш SSH user>`
+- `private_key_path = /root/.ssh/id_ed25519`
+- `remote_base_path = /opt/mtproto-panel/telemt`
 
 ## Доступ через SSH туннель
 
