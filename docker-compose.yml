@@ -1,0 +1,43 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    environment:
+      API_ADDR: :8080
+      DATABASE_PATH: /data/panel.db
+      HEALTHCHECK_INTERVAL: ${HEALTHCHECK_INTERVAL:-30s}
+    ports:
+      - "${API_PORT:-8080}:8080"
+    restart: unless-stopped
+    volumes:
+      - mtproxy-control-data:/data
+      - ${HOME}/.ssh:/root/.ssh:ro
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+      args:
+        VITE_API_BASE_URL: ""
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "${WEB_PORT:-8081}:80"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  mtproxy-control-data:

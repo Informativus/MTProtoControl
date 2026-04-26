@@ -1,0 +1,67 @@
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Local env and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pub
+id_rsa*
+id_ed25519*
+
+# Runtime data
+data/*
+!data/.gitkeep
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+logs/
+tmp/
+dist/
+build/
+coverage/
+
+# Go build/test artifacts
+bin/
+*.test
+*.out
+coverage.out
+
+# Node / frontend artifacts
+node_modules/
+.next/
+.vite/
+storybook-static/
+playwright-report/
+test-results/
+
+# AI / agent transient files
+.codex/
+.claude/
+.cursor/
+.continue/
+.windsurf/
+.aider*
+.ai/
+.agents/
+.playwright-mcp/
+*.prompt.md
+*.scratch.md
+*.tmp.md
+tasks/
+
+# Keep durable project/agent context
+!AGENTS.md
+!docs/
+!docs/**
+!context/
+!context/**

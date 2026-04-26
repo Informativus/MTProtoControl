@@ -1,0 +1,20 @@
+{
+  "name": "mtproxy-control-web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "test": "node --test src/*.test.js",
+    "fmt": "node ./scripts/check-format.mjs",
+    "lint": "node ./scripts/check-format.mjs"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "vite": "^8.0.10"
+  }
+}

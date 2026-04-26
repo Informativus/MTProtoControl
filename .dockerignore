@@ -1,0 +1,9 @@
+.git
+.gitignore
+.playwright-mcp
+data
+node_modules
+apps/web/node_modules
+page-*.yml
+*.log
+*.db

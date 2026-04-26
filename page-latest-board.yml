@@ -1,0 +1,26 @@
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e7]:
+      - generic [ref=e8]: MTProxy Control
+      - paragraph [ref=e9]: Релиз 0.1.0 · локальная панель управления MTProto-прокси
+    - generic [ref=e10]:
+      - generic [ref=e11]
+      - list [ref=e85]
+  - main [ref=e17]:
+    - generic [ref=e18]:
+      - generic [ref=e19]
+      - generic [ref=e23]
+    - region "Серверная доска" [ref=e29]:
+      - article [ref=e30]
+      - article [ref=e39]
+    - navigation "Разделы сервера" [ref=e42]:
+      - button "Сервер Для работы выбран сервер finland_2." [ref=e146] [cursor=pointer]
+      - button "SSH-доступ Запустите проверку SSH, чтобы подтвердить доступ к Docker и сведения о хосте." [ref=e147] [cursor=pointer]
+      - button "Конфиг Сгенерируйте черновик Telemt или сохраните raw TOML как ревизию." [ref=e148] [cursor=pointer]
+      - button "Деплой Сгенерируйте или сохраните конфиг перед деплоем." [ref=e149] [cursor=pointer]
+      - button "Операции Сначала примените деплой, затем обновите статус, логи и ссылку." [ref=e150] [cursor=pointer]
+      - button "Мониторинг Последняя проверка воркера 25.04.2026, 21:48:19." [ref=e151] [cursor=pointer]
+      - button "Оповещения Настройте Telegram, чтобы получать уведомления о down, recovery и ошибках деплоя." [ref=e61] [cursor=pointer]
+    - generic [ref=e64]:
+      - generic [ref=e65]
+      - generic [ref=e73]

@@ -1,0 +1,19 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2DD4BF"/>
+      <stop offset="1" stop-color="#0891B2"/>
+    </linearGradient>
+    <linearGradient id="wire" x1="41" y1="34" x2="86" y2="94" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ECFEFF"/>
+      <stop offset="1" stop-color="#CFFAFE"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="112" height="112" rx="28" fill="url(#bg)"/>
+  <path d="M39 36H56L64 48L72 36H89V46H78L68 60V92H58V60L48 46H39V36Z" fill="#042F2E"/>
+  <path d="M39 82H51M77 82H89M89 46V82M39 46V82" stroke="url(#wire)" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="39" cy="82" r="6" fill="#ECFEFF"/>
+  <circle cx="89" cy="82" r="6" fill="#ECFEFF"/>
+  <circle cx="39" cy="46" r="6" fill="#99F6E4"/>
+  <circle cx="89" cy="46" r="6" fill="#99F6E4"/>
+</svg>

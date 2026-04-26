@@ -1,0 +1,12 @@
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e7]:
+      - generic [ref=e8]: MTProxy Control
+      - paragraph [ref=e9]: Релиз 0.1.0 · локальная панель управления MTProto-прокси
+    - generic [ref=e10]:
+      - generic [ref=e11]
+      - list [ref=e44]
+  - main [ref=e20]:
+    - region "Серверная доска" [ref=e21]:
+      - article [ref=e22]
+      - article [ref=e40]
