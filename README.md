@@ -26,56 +26,15 @@ MTProxy Control - локальная панель для операторов Te
 
 Панель подключается к серверам по SSH, помогает проверить состояние хоста, подготовить конфигурацию Telemt, выполнить deploy и просматривать состояние сервера в одном интерфейсе.
 
-Для локального запуска используются Go API, React/Vite web UI и SQLite.
+Этот README описывает пользовательскую установку панели на сервер и работу с ней через браузер.
 
 ## Что потребуется
 
-Перед запуском установите:
+Перед установкой панели подготовьте:
 
-- `Go 1.22+`
-- `Node.js` и `npm`
-- `sqlite3`
-
-## Локальный запуск
-
-Выполните:
-
-```bash
-make setup
-make db:migrate
-make dev
-```
-
-После запуска будут доступны:
-
-- Web UI: `http://localhost:5173`
-- API health: `http://localhost:8080/health`
-- База данных: `./data/panel.db`
-
-## Локальный запуск через Docker Compose
-
-Выполните:
-
-```bash
-docker compose build
-docker compose up -d
-```
-
-После запуска будут доступны:
-
-- Web UI: `http://localhost:8081`
-- API health: `http://localhost:8080/health`
-
-Для остановки выполните:
-
-```bash
-docker compose down
-```
-
-Обратите внимание:
-
-- `docker-compose.yml` монтирует `${HOME}/.ssh` в `/root/.ssh` только для чтения.
-- Если в панели используется `private_key_path`, внутри контейнера указывайте путь вида `/root/.ssh/id_ed25519`.
+- Docker Engine
+- Docker Compose plugin
+- доступ по SSH к серверам, которыми будет управлять панель
 
 ## Установка на сервер
 
@@ -191,14 +150,3 @@ ssh -N -L 18081:127.0.0.1:8081 -L 18080:127.0.0.1:8080 user@your-server
 
 - Web UI: `http://127.0.0.1:18081`
 - API health: `http://127.0.0.1:18080/health`
-
-## Полезные команды
-
-```bash
-make dev:api
-make dev:web
-make api:test
-make web:test
-make fmt
-make lint
-```
