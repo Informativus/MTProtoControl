@@ -89,6 +89,7 @@ jobs:
             type=semver,pattern={{version}}
             type=sha,format=short
             type=raw,value=beta,enable=${{ contains(github.ref_name, 'beta') }}
+            type=raw,value=latest,enable=${{ !contains(github.ref_name, 'beta') }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
@@ -106,11 +107,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Prepare release assets
+        run: |
+          mkdir -p .release-assets
+          cp deploy/docker-compose.release.yml .release-assets/docker-compose.release.yml
+          sed "s/^IMAGE_TAG=.*/IMAGE_TAG=${GITHUB_REF_NAME#v}/" deploy/release.env.example > .release-assets/release.env.example
+
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2
         with:
           prerelease: ${{ contains(github.ref_name, 'beta') }}
           generate_release_notes: true
           files: |
-            deploy/docker-compose.release.yml
-            deploy/release.env.example
+            .release-assets/docker-compose.release.yml
+            .release-assets/release.env.example

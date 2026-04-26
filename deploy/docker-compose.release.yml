@@ -1,6 +1,6 @@
 services:
   api:
-    image: ${API_IMAGE:?set API_IMAGE in .env}
+    image: ${IMAGE_REGISTRY:-docker.io/informativus}/mtproxy-control-api:${IMAGE_TAG:?set IMAGE_TAG in .env}
     environment:
       APP_ENV: ${APP_ENV:-production}
       API_ADDR: ${API_ADDR:-:8080}
@@ -18,7 +18,7 @@ services:
       start_period: 10s
 
   web:
-    image: ${WEB_IMAGE:?set WEB_IMAGE in .env}
+    image: ${IMAGE_REGISTRY:-docker.io/informativus}/mtproxy-control-web:${IMAGE_TAG:?set IMAGE_TAG in .env}
     depends_on:
       api:
         condition: service_healthy
