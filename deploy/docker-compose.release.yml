@@ -9,7 +9,7 @@ services:
     restart: unless-stopped
     volumes:
       - mtproxy-control-data:/data
-      - ${SSH_KEY_DIR:-./ssh}:/root/.ssh:ro
+      - ./ssh:/root/.ssh:ro
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/health"]
       interval: 30s
