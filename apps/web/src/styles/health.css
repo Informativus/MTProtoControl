@@ -1,0 +1,28 @@
+.history-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.health-history-item.online {
+  border-color: rgba(63, 143, 107, 0.32);
+  background: rgba(32, 68, 53, 0.56);
+}
+
+.health-history-item.degraded {
+  border-color: rgba(197, 138, 47, 0.34);
+  background: rgba(73, 52, 25, 0.64);
+}
+
+.health-history-item.offline {
+  border-color: rgba(160, 74, 74, 0.38);
+  background: rgba(79, 36, 36, 0.72);
+}
+
+@media (max-width: 780px) {
+  .history-item-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

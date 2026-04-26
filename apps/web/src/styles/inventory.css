@@ -1,0 +1,117 @@
+.inventory-panel,
+.inventory-column,
+.inventory-import-card {
+  display: grid;
+  gap: 16px;
+}
+
+.inventory-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.inventory-column {
+  align-content: start;
+}
+
+.server-inventory-form {
+  gap: 18px;
+}
+
+.inventory-import-card {
+  padding: 16px;
+  border: 1px solid rgba(126, 140, 156, 0.18);
+  border-radius: 10px;
+  background: #151c24;
+}
+
+.inventory-import-guide {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.inventory-import-header,
+.inventory-field-group-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(126, 140, 156, 0.16);
+}
+
+.inventory-import-header strong {
+  display: block;
+  margin-top: 4px;
+  color: #f8fafc;
+  font-size: 16px;
+}
+
+.inventory-import-title {
+  margin-top: 4px;
+}
+
+.inventory-import-title strong {
+  display: inline;
+  margin-top: 0;
+}
+
+.inventory-import-list {
+  margin: 0;
+}
+
+.inventory-guide-code {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.52);
+  color: #e2e8f0;
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-x: auto;
+  white-space: pre-wrap;
+}
+
+.inventory-field-group {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid rgba(126, 140, 156, 0.18);
+  border-radius: 10px;
+  background: #151c24;
+}
+
+.inventory-field-group-header strong {
+  color: #f8fafc;
+  font-size: 15px;
+}
+
+.inventory-field-group-header p {
+  margin: 6px 0 0;
+  color: #9ba8b8;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.inventory-field-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 1120px) {
+  .inventory-field-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 780px) {
+  .inventory-field-group-header,
+  .inventory-import-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

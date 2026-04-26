@@ -1,0 +1,37 @@
+.deploy-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(300px, 0.9fr) minmax(0, 1.1fr);
+}
+
+.deploy-column,
+.deploy-stack {
+  display: grid;
+  gap: 16px;
+}
+
+.deploy-column {
+  align-content: start;
+}
+
+.deploy-risk.critical,
+.deploy-event.error {
+  border-color: rgba(160, 74, 74, 0.38);
+  background: rgba(79, 36, 36, 0.72);
+}
+
+.deploy-risk.warning {
+  border-color: rgba(197, 138, 47, 0.34);
+  background: rgba(73, 52, 25, 0.64);
+}
+
+.deploy-event.info {
+  border-color: rgba(103, 169, 201, 0.26);
+  background: rgba(28, 39, 51, 0.42);
+}
+
+@media (max-width: 1120px) {
+  .deploy-grid {
+    grid-template-columns: 1fr;
+  }
+}
