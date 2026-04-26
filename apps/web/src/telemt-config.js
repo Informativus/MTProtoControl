@@ -1,5 +1,7 @@
 const encoder = new TextEncoder();
 
+export { describeApiError } from './api/api-errors.js';
+
 export const telemtFieldDefinitions = [
   {
     key: 'public_host',
@@ -104,30 +106,6 @@ export function getTLSDomainWarning(fields) {
   }
 
   return `tls_domain отличается от public_host: ссылка -> ${publicHost}, ee-secret -> ${tlsDomain}.`;
-}
-
-export function describeApiError(payload) {
-  if (!payload || typeof payload !== 'object' || !payload.error) {
-    return 'Запрос завершился ошибкой.';
-  }
-
-  const { error } = payload;
-  const normalizedMessage = normalizeApiErrorMessage(error.code, error.message);
-  const details = error.details && typeof error.details === 'object' ? Object.entries(error.details) : [];
-  if (details.length === 0) {
-    return normalizedMessage;
-  }
-
-  return `${normalizedMessage}: ${details.map(([key, value]) => `${key} ${value}`).join(', ')}`;
-}
-
-function normalizeApiErrorMessage(code, message) {
-  switch (code) {
-    case 'config_required':
-      return 'Сначала сохраните или примените конфиг Telemt, а затем запрашивайте прокси-ссылку.';
-    default:
-      return message || 'Запрос завершился ошибкой.';
-  }
 }
 
 function hexEncode(value) {

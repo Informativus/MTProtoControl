@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 
-import { API_BASE_URL } from './config.js';
 import {
   createDeployDraft,
   deployDecisionOptions,
@@ -11,7 +10,6 @@ import {
 } from './deploy.js';
 import {
   buildLogsPage,
-  buildOperationsUrl,
   canUseOperationQueryAuth,
   clampLogsPageIndex,
   describeContainerSummary,
@@ -28,7 +26,6 @@ import { buildOperatorSteps, hasConfiguredSSHAuth } from './operator-flow.js';
 import {
   buildPreviewLink,
   createDraftFields,
-  describeApiError,
   getTLSDomainWarning,
   logLevelOptions,
   serializeDraftFields,
@@ -41,6 +38,14 @@ import {
   serializeServerDraft,
   serverInventoryFields,
 } from './server-inventory.js';
+import { configsApi } from './api/configsApi.js';
+import { deployApi } from './api/deployApi.js';
+import { healthApi } from './api/healthApi.js';
+import { describeApiError } from './api/api-errors.js';
+import { getErrorPayload } from './api/http.js';
+import { operationsApi } from './api/operationsApi.js';
+import { serversApi } from './api/serversApi.js';
+import { settingsApi } from './api/settingsApi.js';
 import {
   applyDiscoveryToConfigDraft,
   applyDiscoveryToInventoryDraft,
@@ -501,7 +506,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
+    let ignore = false;
 
     async function checkApi({ silent = false } = {}) {
       if (!silent || !hasLoadedApiState.current) {
@@ -509,107 +514,102 @@ export default function App() {
       }
 
       try {
-        const response = await fetch(`${API_BASE_URL}/health`);
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
+        const payload = await healthApi.getAppHealth();
+        if (ignore) {
+          return;
         }
 
-        const payload = await response.json();
-        if (!cancelled) {
-          setApiState({
-            state: 'online',
-            label: 'В сети',
-            detail: payload.service || 'mtproxy-control-api',
-          });
-          hasLoadedApiState.current = true;
-        }
+        setApiState({
+          state: 'online',
+          label: 'В сети',
+          detail: payload?.service || 'mtproxy-control-api',
+        });
+        hasLoadedApiState.current = true;
       } catch (error) {
-        if (!cancelled) {
-          setApiState({
-            state: 'offline',
-            label: 'Недоступен',
-            detail: error instanceof Error ? error.message : 'нет ответа',
-          });
-          hasLoadedApiState.current = true;
+        if (ignore) {
+          return;
         }
+
+        setApiState({
+          state: 'offline',
+          label: 'Недоступен',
+          detail: error instanceof Error ? error.message : 'нет ответа',
+        });
+        hasLoadedApiState.current = true;
       }
     }
 
-    checkApi();
+    void checkApi();
     const timer = window.setInterval(() => {
       void checkApi({ silent: true });
     }, 15000);
 
     return () => {
-      cancelled = true;
+      ignore = true;
       window.clearInterval(timer);
     };
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
+    let ignore = false;
 
     async function loadTelegramSettings() {
       setTelegramLoading(true);
       setTelegramError('');
 
       try {
-        const response = await fetch(`${API_BASE_URL}/api/settings/telegram`);
-        const payload = await response.json().catch(() => null);
-        if (!response.ok) {
-          throw new Error(describeApiError(payload));
+        const payload = await settingsApi.getTelegram();
+        if (ignore) {
+          return;
         }
 
-        if (!cancelled) {
-          applyTelegramSettingsPayload(payload);
-        }
+        applyTelegramSettingsPayload(payload);
       } catch (error) {
-        if (!cancelled) {
-          setTelegramError(error instanceof Error ? error.message : 'Не удалось загрузить настройки Telegram-оповещений.');
-          setTelegramSettings(defaultTelegramSettings);
+        if (ignore) {
+          return;
         }
+
+        setTelegramError(error instanceof Error ? error.message : 'Не удалось загрузить настройки Telegram-оповещений.');
+        setTelegramSettings(defaultTelegramSettings);
       } finally {
-        if (!cancelled) {
+        if (!ignore) {
           setTelegramLoading(false);
         }
       }
     }
 
-    loadTelegramSettings();
+    void loadTelegramSettings();
 
     return () => {
-      cancelled = true;
+      ignore = true;
     };
   }, []);
   useEffect(() => {
-    let cancelled = false;
+    let ignore = false;
 
     async function loadHealthSettings() {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/healthchecks/settings`);
-        const payload = await response.json().catch(() => null);
-        if (!response.ok) {
-          throw new Error(describeApiError(payload));
+        const payload = await healthApi.getHealthcheckSettings();
+        if (ignore) {
+          return;
         }
 
-        if (!cancelled) {
-          setHealthSettings(payload || defaultHealthSettings);
-        }
+        setHealthSettings(payload || defaultHealthSettings);
       } catch {
-        if (!cancelled) {
+        if (!ignore) {
           setHealthSettings(defaultHealthSettings);
         }
       }
     }
 
-    loadHealthSettings();
+    void loadHealthSettings();
 
     return () => {
-      cancelled = true;
+      ignore = true;
     };
   }, []);
   useEffect(() => {
-    let cancelled = false;
+    let ignore = false;
 
     async function loadServers({ silent = false } = {}) {
       if (!silent || !hasLoadedServers.current) {
@@ -618,14 +618,10 @@ export default function App() {
       setServersError('');
 
       try {
-        const response = await fetch(`${API_BASE_URL}/api/servers`);
-        const payload = await response.json().catch(() => null);
-        if (!response.ok) {
-          throw new Error(describeApiError(payload));
-        }
+        const payload = await serversApi.list();
 
         const nextServers = Array.isArray(payload?.servers) ? payload.servers : [];
-        if (cancelled) {
+        if (ignore) {
           return;
         }
 
@@ -645,26 +641,28 @@ export default function App() {
         });
         hasLoadedServers.current = true;
       } catch (error) {
-        if (!cancelled) {
-          setServersError(error instanceof Error ? error.message : 'Не удалось загрузить список серверов.');
-          setServers([]);
-          setSelectedServerId('');
-          hasLoadedServers.current = true;
+        if (ignore) {
+          return;
         }
+
+        setServersError(error instanceof Error ? error.message : 'Не удалось загрузить список серверов.');
+        setServers([]);
+        setSelectedServerId('');
+        hasLoadedServers.current = true;
       } finally {
-        if (!cancelled && (!silent || !hasLoadedServers.current)) {
+        if (!ignore && (!silent || !hasLoadedServers.current)) {
           setServersLoading(false);
         }
       }
     }
 
-    loadServers();
+    void loadServers();
     const timer = window.setInterval(() => {
       void loadServers({ silent: true });
     }, 15000);
 
     return () => {
-      cancelled = true;
+      ignore = true;
       window.clearInterval(timer);
     };
   }, []);
@@ -728,29 +726,28 @@ export default function App() {
       return;
     }
 
-    let cancelled = false;
+    let ignore = false;
 
     async function loadLatestSSHTestState() {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/servers/${selectedServerId}/ssh-test/latest`);
-        const payload = await response.json().catch(() => null);
-        if (!response.ok) {
-          throw new Error(describeApiError(payload));
+        const payload = await serversApi.getLatestSshTest(selectedServerId);
+        if (ignore) {
+          return;
         }
 
-        if (!cancelled) {
-          setSshTestResult(payload?.result || null);
-          setLastSshTestAt(payload?.tested_at || '');
-          if (!payload?.result && payload?.error_message) {
-            setSshTestError(`Последняя SSH-проверка завершилась ошибкой: ${payload.error_message}`);
-          }
+        setSshTestResult(payload?.result || null);
+        setLastSshTestAt(payload?.tested_at || '');
+        if (!payload?.result && payload?.error_message) {
+          setSshTestError(`Последняя SSH-проверка завершилась ошибкой: ${payload.error_message}`);
         }
       } catch (error) {
-        if (!cancelled) {
-          setSshTestResult(null);
-          setLastSshTestAt('');
-          setSshTestError(error instanceof Error ? error.message : 'Не удалось загрузить сохраненную SSH-проверку.');
+        if (ignore) {
+          return;
         }
+
+        setSshTestResult(null);
+        setLastSshTestAt('');
+        setSshTestError(error instanceof Error ? error.message : 'Не удалось загрузить сохраненную SSH-проверку.');
       }
     }
 
@@ -761,38 +758,37 @@ export default function App() {
       setConfigNotice('');
 
       try {
-        const response = await fetch(`${API_BASE_URL}/api/servers/${selectedServerId}/configs/current`);
-        const payload = await response.json().catch(() => null);
-        if (!response.ok) {
-          throw new Error(describeApiError(payload));
+        const payload = await configsApi.getCurrent(selectedServerId);
+        if (ignore) {
+          return;
         }
 
-        if (!cancelled) {
-          applyConfigPayload(payload);
-        }
+        applyConfigPayload(payload);
       } catch (error) {
-        if (!cancelled) {
-          setConfigError(error instanceof Error ? error.message : 'Не удалось загрузить состояние конфига.');
-          setCurrentConfig(null);
-          setRevisions([]);
-          setDraftTemplate(createDraftFields());
-          setDraftFields(createDraftFields());
-          setEditorText('');
-          setDeployPreview(null);
-          setDeployEvents([]);
+        if (ignore) {
+          return;
         }
+
+        setConfigError(error instanceof Error ? error.message : 'Не удалось загрузить состояние конфига.');
+        setCurrentConfig(null);
+        setRevisions([]);
+        setDraftTemplate(createDraftFields());
+        setDraftFields(createDraftFields());
+        setEditorText('');
+        setDeployPreview(null);
+        setDeployEvents([]);
       } finally {
-        if (!cancelled) {
+        if (!ignore) {
           setConfigLoading(false);
         }
       }
     }
 
-    loadLatestSSHTestState();
-    loadConfigState();
+    void loadLatestSSHTestState();
+    void loadConfigState();
 
     return () => {
-      cancelled = true;
+      ignore = true;
     };
   }, [selectedServerId]); // eslint-disable-line react-hooks/exhaustive-deps -- switching servers resets workspace state in one place
 
@@ -801,38 +797,37 @@ export default function App() {
       return;
     }
 
-    let cancelled = false;
+    let ignore = false;
 
     async function loadInitialStatus() {
       setStatusLoading(true);
       setStatusError('');
 
       try {
-        const response = await fetch(buildOperationsUrl(API_BASE_URL, selectedServerId, '/status', deployDraft));
-        const payload = await response.json().catch(() => null);
-        if (!response.ok) {
-          throw new Error(describeApiError(payload));
+        const payload = await operationsApi.getStatus(selectedServerId, deployDraft);
+        if (ignore) {
+          return;
         }
 
-        if (!cancelled) {
-          setServerStatus(payload?.status || null);
-        }
+        setServerStatus(payload?.status || null);
       } catch (error) {
-        if (!cancelled) {
-          setStatusError(error instanceof Error ? error.message : 'Не удалось загрузить статус сервера.');
-          setServerStatus(null);
+        if (ignore) {
+          return;
         }
+
+        setStatusError(error instanceof Error ? error.message : 'Не удалось загрузить статус сервера.');
+        setServerStatus(null);
       } finally {
-        if (!cancelled) {
+        if (!ignore) {
           setStatusLoading(false);
         }
       }
     }
 
-    loadInitialStatus();
+    void loadInitialStatus();
 
     return () => {
-      cancelled = true;
+      ignore = true;
     };
   }, [selectedServerId]); // eslint-disable-line react-hooks/exhaustive-deps -- initial status load follows selection; later auth edits use manual refresh
 
@@ -841,7 +836,7 @@ export default function App() {
       return undefined;
     }
 
-    let cancelled = false;
+    let ignore = false;
 
     async function loadHealthHistory({ silent = false } = {}) {
       if (!silent) {
@@ -850,38 +845,35 @@ export default function App() {
       setHealthError('');
 
       try {
-        const response = await fetch(`${API_BASE_URL}/api/servers/${selectedServerId}/health?limit=12`);
-        const payload = await response.json().catch(() => null);
-        if (!response.ok) {
-          throw new Error(describeApiError(payload));
-        }
-
-        if (cancelled) {
+        const payload = await healthApi.getServerHistory(selectedServerId, { limit: 12 });
+        if (ignore) {
           return;
         }
 
         applyHealthPayload(selectedServerId, payload);
       } catch (error) {
-        if (!cancelled) {
-          setHealthError(error instanceof Error ? error.message : 'Не удалось загрузить историю проверок.');
-          if (!silent) {
-            setHealthHistory([]);
-          }
+        if (ignore) {
+          return;
+        }
+
+        setHealthError(error instanceof Error ? error.message : 'Не удалось загрузить историю проверок.');
+        if (!silent) {
+          setHealthHistory([]);
         }
       } finally {
-        if (!cancelled && !silent) {
+        if (!ignore && !silent) {
           setHealthLoading(false);
         }
       }
     }
 
-    loadHealthHistory();
+    void loadHealthHistory();
     const timer = window.setInterval(() => {
       void loadHealthHistory({ silent: true });
     }, 15000);
 
     return () => {
-      cancelled = true;
+      ignore = true;
       window.clearInterval(timer);
     };
   }, [selectedServerId]);
@@ -922,7 +914,7 @@ export default function App() {
     setLogsNotice('');
     setLogsStreamState('connecting');
 
-    const source = new EventSource(buildOperationsUrl(API_BASE_URL, selectedServerId, '/logs/stream', deployDraft, { tail: logsWindowSize }));
+    const source = new EventSource(operationsApi.getLogsStreamUrl(selectedServerId, deployDraft, { tail: logsWindowSize }));
 
     source.onopen = () => {
       setLogsStreamState('live');
@@ -1538,18 +1530,7 @@ export default function App() {
   }
 
   async function requestDiscoveredServerSettings(request) {
-    const response = await fetch(`${API_BASE_URL}/api/ssh/discover`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(request),
-    });
-
-    const payload = await response.json().catch(() => null);
-    if (!response.ok) {
-      throw new Error(describeApiError(payload));
-    }
+    const payload = await serversApi.discover(request);
 
     const discovery = payload?.discovery || null;
     if (!discovery?.remote_base_path) {
@@ -1642,17 +1623,7 @@ export default function App() {
       let syncedServer = selectedServer;
       const serverPatch = buildDiscoveryServerPatch(selectedServer, discovery);
       if (serverPatch) {
-        const serverResponse = await fetch(`${API_BASE_URL}/api/servers/${selectedServer.id}`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(serverPatch),
-        });
-        const serverPayload = await serverResponse.json().catch(() => null);
-        if (!serverResponse.ok) {
-          throw new Error(describeApiError(serverPayload));
-        }
+        const serverPayload = await serversApi.update(selectedServer.id, serverPatch);
         syncedServer = applyServerPayload(serverPayload);
         if (!syncedServer) {
           throw new Error('В ответе API отсутствуют обновленные данные сервера после синхронизации MTProto.');
@@ -1662,21 +1633,10 @@ export default function App() {
       const importedAsNewRevision = hasConfigText && shouldSaveDiscoveredConfig(currentConfig, discovery);
       const shouldMarkImportedConfigApplied = hasConfigText && (importedAsNewRevision || !currentConfig?.applied_at);
       if (hasConfigText && shouldMarkImportedConfigApplied) {
-        const configResponse = await fetch(`${API_BASE_URL}/api/servers/${selectedServer.id}/configs/current`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(
-            importedAsNewRevision
-              ? { config_text: discovery.config_text, mark_as_applied: true }
-              : { mark_as_applied: true },
-          ),
-        });
-        const configPayload = await configResponse.json().catch(() => null);
-        if (!configResponse.ok) {
-          throw new Error(describeApiError(configPayload));
-        }
+        const configPayload = await configsApi.saveCurrent(
+          selectedServer.id,
+          importedAsNewRevision ? { config_text: discovery.config_text, mark_as_applied: true } : { mark_as_applied: true },
+        );
 
         applyConfigPayload(configPayload);
       } else if (hasConfigText && currentConfig) {
@@ -1732,8 +1692,6 @@ export default function App() {
 
     const isEdit = inventoryMode === 'edit' && selectedServer;
     const importedDiscovery = inventoryImportStatus === 'success' ? inventoryImportDiscovery : null;
-    const endpoint = isEdit ? `${API_BASE_URL}/api/servers/${selectedServer.id}` : `${API_BASE_URL}/api/servers`;
-    const method = isEdit ? 'PATCH' : 'POST';
 
     setInventoryBusy(true);
     setInventoryFieldErrors({});
@@ -1741,22 +1699,9 @@ export default function App() {
     setInventoryNotice('');
 
     try {
-      const response = await fetch(endpoint, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(serializeServerDraft(inventoryDraft)),
-      });
-
-      const payload = await response.json().catch(() => null);
-      if (!response.ok) {
-        const nextFieldErrors = getApiErrorDetails(payload);
-        setInventoryFieldErrors(nextFieldErrors);
-        throw new Error(
-          Object.keys(nextFieldErrors).length > 0 ? 'Исправьте поля сервера с ошибками и повторите попытку.' : describeApiError(payload),
-        );
-      }
+      const payload = isEdit
+        ? await serversApi.update(selectedServer.id, serializeServerDraft(inventoryDraft))
+        : await serversApi.create(serializeServerDraft(inventoryDraft));
 
       const savedServer = payload?.server;
       if (!savedServer) {
@@ -1796,16 +1741,19 @@ export default function App() {
 
       if (isEdit && savedServer.id === selectedServerId) {
         try {
-          const configResponse = await fetch(`${API_BASE_URL}/api/servers/${savedServer.id}/configs/current`);
-          const configPayload = await configResponse.json().catch(() => null);
-          if (configResponse.ok) {
-            applyConfigPayload(configPayload);
-          }
+          const configPayload = await configsApi.getCurrent(savedServer.id);
+          applyConfigPayload(configPayload);
         } catch {
           // Keep the saved inventory change even if the detail refresh fails.
         }
       }
     } catch (error) {
+      const nextFieldErrors = getApiErrorDetails(getErrorPayload(error));
+      if (Object.keys(nextFieldErrors).length > 0) {
+        setInventoryFieldErrors(nextFieldErrors);
+        setInventoryError('Исправьте поля сервера с ошибками и повторите попытку.');
+        return;
+      }
       setInventoryError(error instanceof Error ? error.message : 'Не удалось сохранить запись о сервере.');
     } finally {
       setInventoryBusy(false);
@@ -1833,14 +1781,7 @@ export default function App() {
     setInventoryNotice('');
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/servers/${deletedServerId}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        const payload = await response.json().catch(() => null);
-        throw new Error(describeApiError(payload));
-      }
+      await serversApi.remove(deletedServerId);
 
       setServers((current) => current.filter((server) => server.id !== deletedServerId));
       setSelectedServerId(nextSelectedServerId);
@@ -1889,18 +1830,7 @@ export default function App() {
     setSshTestNotice('');
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/ssh/test`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      const payload = await response.json().catch(() => null);
-      if (!response.ok) {
-        throw new Error(describeApiError(payload));
-      }
+      const payload = await serversApi.testSsh(requestBody);
 
       setSshTestResult(payload);
       setLastSshTestAt(new Date().toISOString());
@@ -1929,18 +1859,7 @@ export default function App() {
     setConfigNotice('');
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/servers/${selectedServerId}/configs/generate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(serializeDraftFields(draftFields)),
-      });
-
-      const payload = await response.json().catch(() => null);
-      if (!response.ok) {
-        throw new Error(describeApiError(payload));
-      }
+      const payload = await configsApi.generate(selectedServerId, serializeDraftFields(draftFields));
 
       applyConfigPayload(payload);
       setDeployPreview(null);
@@ -1967,18 +1886,7 @@ export default function App() {
     setConfigNotice('');
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/servers/${selectedServerId}/configs/current`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ config_text: editorText }),
-      });
-
-      const payload = await response.json().catch(() => null);
-      if (!response.ok) {
-        throw new Error(describeApiError(payload));
-      }
+      const payload = await configsApi.saveCurrent(selectedServerId, { config_text: editorText });
 
       applyConfigPayload(payload);
       setDeployPreview(null);
@@ -2005,25 +1913,7 @@ export default function App() {
     setDeployEvents([]);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/servers/${selectedServerId}/deploy/preview`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(serializeDeployRequest(deployDraft)),
-      });
-
-      const payload = await response.json().catch(() => null);
-      if (!response.ok) {
-        if (payload?.preview) {
-          setDeployPreview(payload.preview);
-          setLastDiagnosticsAt(new Date().toISOString());
-        }
-        if (Array.isArray(payload?.events)) {
-          setDeployEvents(payload.events);
-        }
-        throw new Error(describeApiError(payload));
-      }
+      const payload = await deployApi.preview(selectedServerId, serializeDeployRequest(deployDraft));
 
       setDeployPreview(payload?.preview || null);
       setLastDiagnosticsAt(new Date().toISOString());
@@ -2032,6 +1922,14 @@ export default function App() {
       setDeployNotice('Превью деплоя загружено: диагностика, план загрузки файлов и сводка рисков доступны ниже.');
       openSection('deploy-section');
     } catch (error) {
+      const payload = getErrorPayload(error);
+      if (payload?.preview) {
+        setDeployPreview(payload.preview);
+        setLastDiagnosticsAt(new Date().toISOString());
+      }
+      if (Array.isArray(payload?.events)) {
+        setDeployEvents(payload.events);
+      }
       setDeployError(error instanceof Error ? error.message : 'Не удалось загрузить превью деплоя.');
     } finally {
       setDeployBusy(false);
@@ -2049,24 +1947,7 @@ export default function App() {
     setDeployEvents([]);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/servers/${selectedServerId}/deploy/apply`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(serializeDeployRequest(deployDraft)),
-      });
-
-      const payload = await response.json().catch(() => null);
-      if (!response.ok) {
-        if (payload?.preview) {
-          setDeployPreview(payload.preview);
-        }
-        if (Array.isArray(payload?.events)) {
-          setDeployEvents(payload.events);
-        }
-        throw new Error(describeApiError(payload));
-      }
+      const payload = await deployApi.apply(selectedServerId, serializeDeployRequest(deployDraft));
 
       if (payload?.config) {
         applyConfigPayload(payload.config);
@@ -2079,6 +1960,13 @@ export default function App() {
       openSection('operations-section');
       await handleLoadStatus({ silent: true });
     } catch (error) {
+      const payload = getErrorPayload(error);
+      if (payload?.preview) {
+        setDeployPreview(payload.preview);
+      }
+      if (Array.isArray(payload?.events)) {
+        setDeployEvents(payload.events);
+      }
       setDeployError(error instanceof Error ? error.message : 'Не удалось применить деплой.');
     } finally {
       setDeployBusy(false);
@@ -2098,11 +1986,7 @@ export default function App() {
     }
 
     try {
-      const response = await fetch(buildOperationsUrl(API_BASE_URL, selectedServerId, '/status', deployDraft));
-      const payload = await response.json().catch(() => null);
-      if (!response.ok) {
-        throw new Error(describeApiError(payload));
-      }
+      const payload = await operationsApi.getStatus(selectedServerId, deployDraft);
 
       setServerStatus(payload?.status || null);
       if (operationQueryAuthReady) {
@@ -2132,11 +2016,7 @@ export default function App() {
     setOperationNotice('');
 
     try {
-      const response = await fetch(buildOperationsUrl(API_BASE_URL, server.id, '/link', operationFields));
-      const payload = await response.json().catch(() => null);
-      if (!response.ok) {
-        throw new Error(describeApiError(payload));
-      }
+      const payload = await operationsApi.getLink(server.id, operationFields);
 
       const nextLink = payload?.link || null;
       if (server.id === selectedServerId) {
@@ -2184,18 +2064,7 @@ export default function App() {
     setOperationNotice('');
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/servers/${selectedServerId}/restart`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(serializeDeployRequest(deployDraft)),
-      });
-
-      const payload = await response.json().catch(() => null);
-      if (!response.ok) {
-        throw new Error(describeApiError(payload));
-      }
+      const payload = await operationsApi.restart(selectedServerId, serializeDeployRequest(deployDraft));
 
       setOperationEvents(Array.isArray(payload?.result?.events) ? payload.result.events : []);
       syncSavedKeyPathFromDraft();
@@ -2229,11 +2098,7 @@ export default function App() {
     }
 
     try {
-      const response = await fetch(buildOperationsUrl(API_BASE_URL, selectedServerId, '/logs', deployDraft, { tail: logsWindowSize }));
-      const payload = await response.json().catch(() => null);
-      if (!response.ok) {
-        throw new Error(describeApiError(payload));
-      }
+      const payload = await operationsApi.getLogs(selectedServerId, deployDraft, { tail: logsWindowSize });
 
       setLogsData(payload?.logs || null);
       setLogsPageIndex(getNewestLogsPageIndex(payload?.logs?.result?.stdout || '', logsPageSize));
@@ -2288,18 +2153,7 @@ export default function App() {
     setTelegramNotice('');
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/settings/telegram`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(serializeTelegramSettings(telegramSettings)),
-      });
-
-      const payload = await response.json().catch(() => null);
-      if (!response.ok) {
-        throw new Error(describeApiError(payload));
-      }
+      const payload = await settingsApi.saveTelegram(serializeTelegramSettings(telegramSettings));
 
       applyTelegramSettingsPayload(payload);
       setTelegramNotice('Настройки Telegram-оповещений сохранены. Пустое поле токена оставляет текущий сохраненный токен без изменений.');
@@ -2316,14 +2170,7 @@ export default function App() {
     setTelegramNotice('');
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/settings/telegram/test`, {
-        method: 'POST',
-      });
-
-      const payload = await response.json().catch(() => null);
-      if (!response.ok) {
-        throw new Error(describeApiError(payload));
-      }
+      await settingsApi.sendTelegramTest();
 
       setTelegramNotice('Тестовое Telegram-оповещение отправлено с использованием сохраненных токена и chat id.');
     } catch (error) {

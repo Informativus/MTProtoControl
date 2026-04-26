@@ -1,3 +1,5 @@
+export { getApiErrorDetails } from './api/api-errors.js';
+
 export const defaultRemoteBasePath = '/opt/mtproto-panel/telemt';
 
 export const serverInventoryFields = [
@@ -101,18 +103,6 @@ export function serializeServerDraft(draft) {
     sni_domain: draft.sni_domain.trim(),
     remote_base_path: draft.remote_base_path.trim(),
   };
-}
-
-export function getApiErrorDetails(payload) {
-  if (!payload || typeof payload !== 'object' || !payload.error || typeof payload.error !== 'object') {
-    return {};
-  }
-
-  if (!payload.error.details || typeof payload.error.details !== 'object') {
-    return {};
-  }
-
-  return payload.error.details;
 }
 
 export function getNextSelectedServerId(servers, deletedServerId, selectedServerId) {
