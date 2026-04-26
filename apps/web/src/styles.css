@@ -335,13 +335,18 @@ code {
 }
 
 .server-item strong {
+  display: block;
   color: #f8fafc;
   font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .server-item-title {
   display: inline-flex;
   align-items: center;
+  min-width: 0;
   gap: 8px;
 }
 
@@ -349,33 +354,12 @@ code {
   color: #8ec5ff;
 }
 
-.server-item-address {
-  color: #9db2ce;
-}
-
-.server-item-link-hint {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: #8ec5ff;
-  font-size: 11px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.server-item-link-hint .app-icon {
-  flex-shrink: 0;
-}
-
 .server-item-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-}
-
-.server-item-row-bottom {
-  align-items: flex-end;
+  min-width: 0;
 }
 
 .server-item span {
@@ -383,9 +367,33 @@ code {
   font-size: 12px;
 }
 
-.server-item .status-chip {
-  min-width: 96px;
-  white-space: nowrap;
+.server-item-status-dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.12);
+}
+
+.server-item-status-dot.online {
+  background: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.14);
+}
+
+.server-item-status-dot.degraded {
+  background: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.14);
+}
+
+.server-item-status-dot.offline {
+  background: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.14);
+}
+
+.server-item-status-dot.unknown {
+  background: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.12);
 }
 
 .server-item.active {
@@ -1081,7 +1089,6 @@ h2 {
 .workspace-hub,
 .stage-grid,
 .workspace-focus-grid,
-.inventory-form-overview,
 .inventory-field-grid {
   display: grid;
   gap: 16px;
@@ -1449,10 +1456,6 @@ h2 {
   gap: 18px;
 }
 
-.inventory-form-overview {
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-}
-
 .mini-metric {
   display: grid;
   gap: 6px;
@@ -1714,6 +1717,15 @@ h2 {
   margin-top: 4px;
   color: #f8fafc;
   font-size: 16px;
+}
+
+.inventory-import-title {
+  margin-top: 4px;
+}
+
+.inventory-import-title strong {
+  display: inline;
+  margin-top: 0;
 }
 
 .inventory-import-header p {
@@ -2282,8 +2294,6 @@ code {
 .sidebar-meta-list dt,
 .health-list dt,
 .field-label,
-.server-item-address,
-.server-item-link-hint,
 .server-board-route,
 .server-board-caption,
 .server-board-path,
@@ -2961,7 +2971,6 @@ h2 {
     grid-template-columns: 1fr;
   }
 
-  .inventory-form-overview,
   .inventory-field-grid,
   .stage-grid,
   .server-board-grid,

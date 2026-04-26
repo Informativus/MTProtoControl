@@ -113,29 +113,6 @@ const inventoryFieldGroups = [
   },
 ];
 
-const inventoryQuickHints = [
-  {
-    label: 'Если это тот же сервер',
-    value: 'host = localhost',
-    description: 'Когда панель и Telemt стоят на одном сервере, в host можно указывать localhost или 127.0.0.1.',
-  },
-  {
-    label: 'Путь к SSH-ключу',
-    value: 'Docker: /root/.ssh/id_ed25519',
-    description: 'Если панель запущена без Docker, укажите обычный путь на машине API, например /home/operator/.ssh/id_ed25519.',
-  },
-  {
-    label: 'Папка Telemt',
-    value: '/opt/mtproto-panel/telemt',
-    description: 'Оставляйте для нового deploy. Если Telemt уже установлен вручную, укажите его текущую папку и потом нажмите «Импортировать MTProto».',
-  },
-  {
-    label: 'Публичный маршрут',
-    value: 'mt.example.com : 443',
-    description: 'Обычно public_host и sni_domain совпадают, public_ip - это внешний IP сервера, а mtproto_port чаще всего равен 443.',
-  },
-];
-
 const sameHostImportFieldExample = [
   'host = localhost',
   'ssh_user = <ваш SSH user>',
@@ -1145,7 +1122,7 @@ export default function App() {
     ? inventoryRouteReady
       ? 'Используйте это только для уже установленного прокси: импорт обновит найденные значения поверх текущего маршрута.'
       : 'Используйте это только для уже установленного прокси: импорт заполнит маршрут MTProto автоматически.'
-    : 'Используйте это только если прокси уже существует на сервере и вы хотите импортировать его настройки. Для импорта заполните host, ssh_user и private_key_path. Если панель и Telemt на одном сервере, воспользуйтесь подсказкой ниже.';
+    : 'Используйте это только если прокси уже существует на сервере и вы хотите импортировать его настройки. Для импорта заполните host, ssh_user и private_key_path. Если панель и Telemt на одном сервере, воспользуйтесь подсказками ниже.';
 
   const tlsDomainWarning = getTLSDomainWarning(draftFields);
   const draftPreviewLink = buildPreviewLink(draftFields);
@@ -2393,6 +2370,7 @@ export default function App() {
             {visibleSidebarServers.map((server) => {
               const isActive = server.id === selectedServerId;
               const serverHealthState = normalizeHealthState(server.status);
+              const serverHealthLabel = formatHealthState(server.status);
               return (
                 <button
                   className={`server-item ${isActive ? 'active' : ''}`}
@@ -2406,14 +2384,12 @@ export default function App() {
                       <AppIcon name="server" size={14} />
                       <strong>{server.name}</strong>
                     </div>
-                    <span className={`status-chip ${serverHealthState}`}>{formatHealthState(server.status)}</span>
-                  </div>
-                  <div className="server-item-row server-item-row-bottom">
-                    <span className="server-item-address">{`${server.public_host || server.host}:${server.mtproto_port || 443}`}</span>
-                    <span className="server-item-link-hint" aria-hidden="true">
-                      <span>Открыть</span>
-                      <AppIcon name="chevron-right" size={14} />
-                    </span>
+                    <span
+                      aria-label={`Статус: ${serverHealthLabel}`}
+                      className={`server-item-status-dot ${serverHealthState}`}
+                      role="img"
+                      title={`Статус: ${serverHealthLabel}`}
+                    />
                   </div>
                 </button>
               );
@@ -2646,23 +2622,14 @@ export default function App() {
 
               {inventoryFormVisible ? (
                 <>
-                  <div className="inventory-form-overview summary-grid" aria-label="Быстрые подсказки по заполнению сервера">
-                    {inventoryQuickHints.map((hint) => (
-                      <article className="preview-card" key={hint.label}>
-                        <span className="preview-label">Быстрая подсказка</span>
-                        <strong>{hint.label}</strong>
-                        <code>{hint.value}</code>
-                        <span>{hint.description}</span>
-                      </article>
-                    ))}
-                  </div>
-
                   <article className="inventory-import-card">
                     <div className="inventory-import-header">
                       <div>
                         <span className="preview-label">Импорт из существующего Telemt</span>
-                        <strong>Импортировать MTProto</strong>
-                        <p>{inventoryImportHint}</p>
+                        <div className="title-with-hint inventory-import-title">
+                          <strong>Импортировать MTProto</strong>
+                          <InlineHint text={inventoryImportHint} />
+                        </div>
                       </div>
                       <span className={`status-chip ${inventoryImportBadge.tone}`}>{inventoryImportBadge.label}</span>
                     </div>
@@ -2745,7 +2712,10 @@ export default function App() {
 
                             return (
                               <label className="field-card" key={field.key}>
-                                <span className="field-label">{field.label}</span>
+                                <span className="field-label title-with-hint">
+                                  <span>{field.label}</span>
+                                  {field.description ? <InlineHint text={field.description} /> : null}
+                                </span>
                                 <input
                                   className={`text-input ${fieldError ? 'input-error' : ''}`}
                                   min={field.type === 'number' ? '1' : undefined}
@@ -2755,7 +2725,6 @@ export default function App() {
                                   type={field.type}
                                   value={inventoryDraft[field.key]}
                                 />
-                                {field.description ? <span className="field-hint">{field.description}</span> : null}
                                 {fieldError ? <span className="field-error">{fieldError}</span> : null}
                               </label>
                             );
