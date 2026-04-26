@@ -62,7 +62,7 @@ import {
 } from './telegram-alerts.js';
 import { describeHealthFlags, describeHealthMessage, describeHealthProblem } from './health-messages.js';
 import { releaseVersion } from './release.js';
-import { buildServerWorkspacePath, parseWorkspacePath } from './workspace-route.js';
+import { readWorkspaceRoute, useWorkspaceRoute } from './workspace-router.js';
 
 const initialApiState = {
   state: 'checking',
@@ -202,8 +202,13 @@ function formatDateTime(value) {
   return date.toLocaleString('ru-RU');
 }
 
-function readCurrentPath() {
-  return typeof window !== 'undefined' ? window.location.pathname : '/';
+function scheduleViewportUpdate(callback) {
+  if (typeof window === 'undefined') {
+    callback();
+    return;
+  }
+
+  window.requestAnimationFrame(callback);
 }
 
 function AppIcon({ name, size = 16, className = '' }) {
@@ -482,7 +487,6 @@ export default function App() {
   const [telegramTesting, setTelegramTesting] = useState(false);
   const [telegramError, setTelegramError] = useState('');
   const [telegramNotice, setTelegramNotice] = useState('');
-  const [currentPath, setCurrentPath] = useState(readCurrentPath);
   const [workspaceMode, setWorkspaceMode] = useState('guided');
   const [activeSectionId, setActiveSectionId] = useState('inventory-section');
   const [inventoryFocusRequest, setInventoryFocusRequest] = useState(0);
@@ -492,18 +496,14 @@ export default function App() {
   const inventoryPrimaryInputRef = useRef(null);
   const logsOutputRef = useRef(null);
   const workspaceRef = useRef(null);
-
-  useEffect(() => {
-    function handlePopState() {
-      setCurrentPath(readCurrentPath());
-    }
-
-    window.addEventListener('popstate', handlePopState);
-
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, []);
+  const {
+    pathname: currentPath,
+    route: workspaceRoute,
+    isBoardView,
+    isDetailView,
+    navigateToBoard: routeNavigateToBoard,
+    navigateToServerWorkspace: routeNavigateToServerWorkspace,
+  } = useWorkspaceRoute();
 
   useEffect(() => {
     let ignore = false;
@@ -627,7 +627,7 @@ export default function App() {
 
         setServers(nextServers);
         setSelectedServerId((current) => {
-          const routeServerId = parseWorkspacePath(readCurrentPath()).serverId;
+          const routeServerId = readWorkspaceRoute().serverId;
 
           if (routeServerId && nextServers.some((server) => server.id === routeServerId)) {
             return routeServerId;
@@ -666,10 +666,6 @@ export default function App() {
       window.clearInterval(timer);
     };
   }, []);
-
-  const workspaceRoute = parseWorkspacePath(currentPath);
-  const isDetailView = workspaceRoute.view === 'detail';
-  const isBoardView = !isDetailView;
 
   useEffect(() => {
     const currentSelectedServer = servers.find((server) => server.id === selectedServerId) || null;
@@ -1040,12 +1036,11 @@ export default function App() {
     }
 
     if (!workspaceRoute.serverId || !servers.some((server) => server.id === workspaceRoute.serverId)) {
-      if (window.location.pathname !== '/') {
-        window.history.replaceState({}, '', '/');
+      if (currentPath !== '/') {
+        routeNavigateToBoard({ replace: true });
       }
-      setCurrentPath('/');
     }
-  }, [isDetailView, servers, serversLoading, workspaceRoute.serverId]);
+  }, [currentPath, isDetailView, routeNavigateToBoard, servers, serversLoading, workspaceRoute.serverId]);
 
   useEffect(() => {
     if (!selectedServer?.saved_private_key_path) {
@@ -1340,28 +1335,18 @@ export default function App() {
     setWorkspaceMode(nextMode);
     setActiveSectionId(resolvedSectionId);
 
-    window.setTimeout(() => {
+    scheduleViewportUpdate(() => {
       if (nextMode === 'all') {
         document.getElementById(resolvedSectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         return;
       }
 
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 0);
-  }
-
-  function setWorkspacePath(nextPath, options = {}) {
-    const { replace = false } = options;
-
-    if (window.location.pathname !== nextPath) {
-      window.history[replace ? 'replaceState' : 'pushState']({}, '', nextPath);
-    }
-
-    setCurrentPath(nextPath);
+    });
   }
 
   function navigateToBoard(options = {}) {
-    setWorkspacePath('/', options);
+    routeNavigateToBoard(options);
   }
 
   function navigateToServerWorkspace(serverId, options = {}) {
@@ -1373,15 +1358,15 @@ export default function App() {
     setSelectedServerId(serverId);
     setWorkspaceMode('guided');
     setActiveSectionId((current) => (current === 'inventory-section' ? 'ssh-section' : current));
-    setWorkspacePath(buildServerWorkspacePath(serverId), options);
-    window.setTimeout(() => {
+    routeNavigateToServerWorkspace(serverId, options);
+    scheduleViewportUpdate(() => {
       if (workspaceRef.current) {
         workspaceRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
         return;
       }
 
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 0);
+    });
   }
 
   const shouldRenderSection = (sectionId) => showAllSections || activeSectionId === sectionId;
